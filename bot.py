@@ -1,7 +1,13 @@
 # bot.py
 import random
 import discord
+from discord.ext import tasks
 import re
+
+import time
+from bs4 import BeautifulSoup
+import lxml
+import urllib3
 
 token = 'MTExNzYyNTE3MTgyMjUxODI5Mw.GIqnfM.IKPXZEasORYFYBJxINcpIiT11Cmd1CL35bCwCE'
 server = ''
@@ -9,9 +15,36 @@ server = ''
 intents = discord.Intents.all()
 client = discord.Client(intents=intents)
 
+#un news thing
+def get_news_link(str):
+    if str == 'all':
+        url = 'https://news.un.org/feed/subscribe/en/news/all/rss.xml'
+    elif str == 'middle east':
+        url = 'https://news.un.org/feed/subscribe/en/news/region/middle-east/feed/rss.xml'
+    data = urllib3.request('GET', url).data
+    soup = BeautifulSoup(data, 'xml')
+    links = soup.find_all('link')
+    all_news = []
+    for link in links:
+        all_news.append(link.get_text())
+    all_news = [link for link in all_news if 'story' in link]
+    return(random.choice(all_news))
+
+last_message_time = time.time()
+@tasks.loop(seconds = 15.0)
+async def add_news():
+        global last_message_time
+        rel_channel = client.get_channel(1116911241697443840)
+        print(rel_channel)
+        t = time.time()
+        if t - last_message_time > random.randint(86400, 10000+86400):
+            last_message_time = t
+            await rel_channel.send(get_news_link('all'))
+
 @client.event
 async def on_ready():
     print('yay')
+    add_news.start()
 
 def compliment(n):
     return 'prizers'
@@ -166,9 +199,12 @@ def has_celebration(str):
 async def on_message(message):
     if message.author == client.user:
         return
-
+    
     prompt = message.content
+    print(prompt)
     response = ''
+    global last_message_time
+    last_message_time = time.time()
 
     if has_thanking(prompt):
         await message.add_reaction('🤍')
@@ -221,3 +257,4 @@ async def on_message(message):
         await message.channel.send(response)
 
 client.run(token)
+
