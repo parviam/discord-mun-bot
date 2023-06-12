@@ -13,6 +13,9 @@ client = discord.Client(intents=intents)
 async def on_ready():
     print('yay')
 
+def compliment(n):
+    return 'prizers'
+
 def to_richard(str):
     p = re.compile('(richard)', re.IGNORECASE)
     q = re.compile('.*( richard)$', re.IGNORECASE)
@@ -34,7 +37,7 @@ def no_idea(str):
              'I can find, despite great effort, no clarity in you.',
              'May your elucidate upon that?',
              '??',
-             'Did you, a person of no doubt great stature, ask me' + str + '?',
+             'Did you, a person of no doubt great stature, ask me ' + str + '?',
              'Hmmm?',
              'What?',
              'Wherefore?',
@@ -43,11 +46,101 @@ def no_idea(str):
              'And what about it?'
              ]
     if '?' in str:
-        ideas.append(prompt[:-1] + '???')
+        ideas.append(str[:-1] + '???')
     return random.choice(ideas)
 
+def conf_info(prompt):
+    GSMSTMUNC = {
+        'name': 'GSMSTMUNC',
+        'website': 'https://sites.google.com/view/gsmstmunc/home',
+        'date': 'Saturday, September 30th',
+        'committees': ['GA1', 'GA6', 'SC', 'The War of the Roses', 'UNESCO'],
+        'awards': ['Outstanding Delegate', 'Honorable Mention', 'Commendable Position Paper'],
+        'rules': ['https://docs.google.com/document/d/11iKWptlU39CySy4vLO6aDhx9CMaWHsZBTUqgPLmt8aE/edit?usp=sharing'],
+        'delegation_awards': True
+    }
+    GTMUNC = {
+        'name': 'GTMUNC',
+        'website': 'https://gtmun.gatech.edu/gtmun-hs/',
+        'date': 'October 9th and 10th',
+        'committees': ['GA Plenary', 'GA1', 'GA2', 'GA3' , 'GA6', 'UNEP', 'CSTD', 'IAEA', 'African Union', 'WHO', 'Ad-Hoc', 'UNESCO', 'Press Corps', 'Meta Oversight Board'],
+        'awards': ['Best Delegate', 'Outstanding Delegate', 'Honorable Delegate'],
+        'rules': ['http://www.gtmun.gatech.edu/wp-content/uploads/2021/03/Delegate-Guide-2021.pdf'],
+        'delegation_awards': False
+    }
+    GSUMUNC = {
+        'name': 'GSUMUNC Fall',
+        'website': 'http://gsumun.org/index.html',
+        'date': 'November',
+        'committees': ['The fools at GSU have refused to reveal their committees!'],
+        'awards': ['GSU fails to provide induvidual awards - a show of cowardice!'],
+        'rules': ['http://gsumun.org/Resources.html'],
+        'delegation_awards': True        
+    }
+    KSUMUNC = {
+        'name': 'KSUMUNC',
+        'website': 'https://conference.kennesaw.edu/hsmun/index.php',
+        'date': 'an unknown time',
+        'committees': ['The fools at KSU have refused to reveal their committees!'],
+        'awards': ['With fortune I endeavor to inform thou that I know not of the awards provided.'],
+        'rules': ['https://conference.kennesaw.edu/hsmun/delegate-preparation.php'],
+        'delegation_awards': False        
+    }
+    answer = ''
+    if 'gsmstmun' in prompt.lower():
+        print('gsmstmunc')
+        conference = GSMSTMUNC
+    if 'gtmun' in prompt.lower():
+        conference = GTMUNC
+    if 'gsumun' in prompt.lower():
+        conference = GSUMUNC
+    if 'ksumun' in prompt.lower():
+        conference = KSUMUNC
+    else:
+        return answer
+    if 'when' in prompt.lower():
+        answer += random.choice([conference['name'] + ' shall take place within ' + conference['date'] + '. ', 
+                                 'The conference shalt be held within ' + conference['date'] + '. ',
+                                 'As the world is my witness, the conference has been foretold to occur within ' + conference['date'] + '. '])
+    if 'committees' in prompt.lower():    
+        answer += random.choice(['Thy ' + str(len(conference['committees'])) + ' choices of committee be:',
+                                 'In the hallowed halls of ' + conference['name'] + ' thou choices shall be few:',
+                                 'Thou hast some fair choice upon which to exhaust the capacities of your wit:'])
+        for committee in conference['committees']:
+            answer += '\n- ' + committee
+        answer += '\n'
+    if 'awards' in prompt.lower():
+        answer += random.choice(['If thou keep your wit and fill thy mind with determination, thou may recieve: ',
+                                 'There are naught but ' + str(len(conference['awards'])) + ' awards: ',
+                                 'Sate your appetite for awards at ' + conference['name'] + ' with these and these alone:'])
+        for award in conference['awards']:
+            answer += '\n- ' + award
+        answer += '\n'
+        if conference['delegation_awards']:
+            answer += random.choice(['Our great team may also be bestowed awards as a unit. ',
+                                     'But despair not! Your blumbering incompetence may be covered, for our team may win awards. ',
+                                     'The great trophy cases of our school may also be made whole from delegation awards won. '])
+    if 'rules' in prompt.lower():
+        answer += random.choice(['For your pleasure, the rules of procedure: ',
+                                 'When thou willst, the rules upon which proceedings occur: ',
+                                 'Under the roofes of ' + conference['name'] + ', the following rules shalt apply: '
+                                 'Gaze upon this majestic document of procedure and cower in acceptance: ',
+                                 'Behold! Rules! '])
+        answer += conference['rules'] + '\n'
+
+    answer += random.choice(['Behold! The website of the ' + compliment(2) + ' at ' + conference['name'],
+                             'Be amazed by the site on the web: ',
+                             'O what wonders of technology! Here, gaze thine eyes upon the beauty of progress! Observe thine site! ',
+                             'I hadh\'t endow upon ye thine information: ',
+                             'I bring you tales of the fabled meeting of minds: '])
+    answer += conference['website']
+    return answer
+
 def respond_direct(prompt):
-    return no_idea(prompt)
+    answer = conf_info(prompt)
+    if answer == '':
+        return no_idea(prompt)
+    return answer
 
 def has_thanking(str):
     p = re.compile('(?<!\w)(ty+|tysm+|thx+|thanks|thank u+|thank you+|gracias+|dank+|danke|dankesch|dank u+)(?!\w)',re.IGNORECASE)
@@ -88,7 +181,7 @@ async def on_message(message):
     
     if 'sovereignty' in prompt.lower():
         if random.random() > 0.7:
-            response = 'Quiet! If thou speakst with more energy, the ' + random.choice(['Chinese', 'Russians', 'North Koreans']) + 'may hear!'
+            response = 'Quiet! If thou speakst with more energy, the ' + random.choice(['Chinese', 'Russians', 'North Koreans']) + ' may hear!'
         else:
             response = random.choice(['Full many a glorious morning have I seen flatter the mountain-tops with sovereign eye',
                                       'In nature, sovereign mistress over wrack, As thou goest onwards still will pluck thee back,She keeps thee to this purpose, that her skillMay time disgrace, and wretched minute kill.',
@@ -120,11 +213,11 @@ async def on_message(message):
                                   'Parlibro!',
                                   'Parlibro: brother in parlimentary procedure.',
                                   'The greatest parlibros art also parlipros',
-                                  'Art not all great parlibros parlibros?',
+                                  'Art not all great parlibros parlipros?',
                                   'Parlibro, parlibro, wherefore art thou parlibro?'
                                   ])
 
-    if response != '':
+    if not (response == ''):
         await message.channel.send(response)
 
 client.run(token)
