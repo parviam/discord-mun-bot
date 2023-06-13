@@ -169,10 +169,18 @@ def conf_info(prompt):
     answer += conference['website']
     return answer
 
+def news_find(str):
+    p = re.compile("(?<!\w)(story|stories|news)(?!\w)", re.IGNORECASE)
+    if not p.match(str):
+        return ''
+    return get_news_link('all')
+
 def respond_direct(prompt):
     answer = conf_info(prompt)
-    if answer == '':
-        return no_idea(prompt)
+    if answer = '':
+        answer = news_find(prompt)
+    if answer = '':
+        answer = no_idea(prompt)
     return answer
 
 def has_thanking(str):
