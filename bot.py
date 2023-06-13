@@ -167,6 +167,7 @@ def conf_info(prompt):
                              'I hadh\'t endow upon ye thine information: ',
                              'I bring you tales of the fabled meeting of minds: '])
     answer += conference['website']
+    print(answer)
     return answer
 
 def news_find(str):
@@ -177,9 +178,9 @@ def news_find(str):
 
 def respond_direct(prompt):
     answer = conf_info(prompt)
-    if answer = '':
+    if answer == '':
         answer = news_find(prompt)
-    if answer = '':
+    if answer == '':
         answer = no_idea(prompt)
     return answer
 
