@@ -17,62 +17,6 @@ intents = discord.Intents.all()
 client = discord.Client(intents=intents)
 
 #un news thing
-def get_news_link(s):
-    str = s.lower()
-    print('getting news link, ')
-    if 'climate c' in str:
-        print('topic: climate change')
-        url = 'https://news.un.org/feed/subscribe/en/news/topic/climate-change/feed/rss.xml'
-    elif 'women' in str:
-        print('topic: un women')
-        url = 'https://www.unwomen.org/en/rss-feeds/news'
-    elif 'economic' in str:
-        print('topic: economic and social council')
-        url = 'https://news.un.org/feed/subscribe/en/news/topic/economic-development/feed/rss.xml'
-    elif 'health' in str:
-        print('topic: health')
-        url = 'https://news.un.org/feed/subscribe/en/news/topic/health/feed/rss.xml'
-    elif 'geneva' in str:
-        print('location: un geneva')
-        url = 'https://www.ungeneva.org/news-media/press-releases-list/rss.xml'
-    elif 'human' in str:
-        print('topic: human rights')
-        url = 'https://news.un.org/feed/subscribe/en/news/topic/human-rights/feed/rss.xml'
-    elif 'sdg' in str or 'sustainable de' in str:
-        print('topic: SDGs')
-        url = 'https://news.un.org/feed/subscribe/en/news/topic/sdgs/feed/rss.xml'
-    elif 'middle east' in str:
-        print('region: middle east')
-        url = 'https://news.un.org/feed/subscribe/en/news/region/middle-east/feed/rss.xml'
-    elif 'asia' in str:
-        print('region: asia')
-        url = 'https://news.un.org/feed/subscribe/en/news/region/asia-pacific/feed/rss.xml'
-    elif 'africa' in str:
-        print('region: africa')
-        url = 'https://news.un.org/feed/subscribe/en/news/region/africa/feed/rss.xml'
-    elif 'europe' in str:
-        print('region: europe')
-        url = 'https://news.un.org/feed/subscribe/en/news/region/europe/feed/rss.xml'
-    elif 'america' in str:
-        print('region: americas')
-        url = 'https://news.un.org/feed/subscribe/en/news/region/americas/feed/rss.xml'
-    else:
-        print('no region found, sharing generic story')
-        url = 'https://news.un.org/feed/subscribe/en/news/all/rss.xml'
-    
-    xml = urllib3.PoolManager()
-    data = xml.request('GET', url).data
-
-    soup = BeautifulSoup(data, 'xml')
-    links = soup.find_all('link')
-    all_news = []
-    for link in links:
-        all_news.append(link.get_text())
-    print(all_news)
-    all_news = [link for link in all_news if ('story' in link or 'doc' in link)]
-    print(all_news)
-    return(random.choice(all_news))
-
 last_message_time = time.time()
 @tasks.loop(hours = 1.0)
 async def add_news():
@@ -91,10 +35,196 @@ async def on_ready():
 def compliment(n):  #Todo
     return 'prizers'
 
+def has_thanking(str):
+    p = re.compile('(?<!\w)(ty+|tysm+|thx+|thanks|thank u+|thank you+|gracias+|dank+|danke|dankesch|dank u+)(?!\w)',re.IGNORECASE)
+    return p.search(str) is not None
+
+def mentions_ai(str):
+    p = re.compile('(?<!\w)(ai|machine learning|ml|artificial intelligence)(?!\w)', re.IGNORECASE)
+    return p.search(str) is not None
+
+def has_panic(str):
+    if 'lmao' in str.lower():
+        return False
+    if str.upper() == str and len(str) > 4:
+        return True
+    if 'AAAAAA' in str:
+        return True
+    return False
+
+def has_celebration(str):
+    p = re.compile('(?<!\w)(yay+|wooo+|congrats+|congratulations+|bravo+|hooray+)(?!\w)', re.IGNORECASE)
+    return p.search(str) is not None
+
 def to_richard(str):
     p = re.compile('(richard)|(.*( richard)$)', re.IGNORECASE)
     q = re.compile('(richie)|(.*( richie)$)', re.IGNORECASE)
     return (p.match(str) is not None or q.match(str) is not None)
+
+def respond_direct(prompt):
+    print('message to richard detected!')
+    answer = conf_info(prompt)
+    if answer == '':
+        answer = news_find(prompt)
+    if answer == '':
+        answer = answer_parlipro(prompt)
+    if answer == '' and has_thanking(prompt):
+        answer = random.choice(['You are most welcome!', 'It was my pleasure!', 'Mhm', 'Of course!', 
+                                'And thank you!', 'Ty!', 'yw', 'You are the welcomest!',
+                                'It was nothing more than my duty!', 'Anytime!', 'You helped!'])
+    if answer == '':
+        answer = greeting(prompt)
+    if answer == '' and 'do better' in prompt:
+        answer = random.choice(['I try mine best', ':(', '💔', 'D:', 'Ah.', 'Silence, unbeliever!'])
+    if answer == '':
+        answer = no_idea(prompt)
+    return answer
+
+def answer_parlipro(str):
+    if re.compile('(?<!\w)(unmod|unmoderated caucus|unmoderated)(?!\w)', re.IGNORECASE).search(str) is not None:
+        return '''Unmoderated caucuses are when delegates can get up from their seat and walk around, interrupting normal debate. This is often used to gather support, talk to key partners, or write a resolution. To motion for an unmoderated caucus, say \"<DELEGATION> motions for a <DURATION> minute unmoderated caucus.\" Importantly, unmoderated caucuses need no topic.
+        Try this: https://muninfopedia.home.blog/2019/03/07/unmoderated-caucus/ '''
+    elif re.compile('(?<!\w)(mod|moderated caucus|moderated)(?!\w)', re.IGNORECASE).search(str) is not None:
+        return '''A moderated caucus, or a mod, is a period of formal debate, where speakers will give speeches on their perspective about a topic. For example, South Korea might talk about the DMZ during a moderated caucus on "Current Issue," if the currently debated issue is Addressing Destabilization on The Korean Peninsula. To motion for a moderated caucus, try \"<> motions for a <> minute mod with a speaking time of <> on the topic of <>\" Remember that your total time must be divisible by your speaking time!
+        Try this: https://munuc.org/speaking-part-1/'''
+    elif re.compile('(?<!\w)(point|points)(?!\w)', re.IGNORECASE).search(str) is not None:
+        return '''There are three points. All points may interrupt a speaker or even the chair. Let us go through them at once!
+        POINT OF ORDER -
+        A point of order is appropriate when a member finds a procedural error made by the chair or by another delegate. A member-state making such a motion may not speak on the substantive issue at hand, but must limit remarks to the precise procedural point in question. 
+        POINT OF PERSONAL PRIVILEGE - 
+        A point of personal privilege is appropriate when a member is experiencing a personal discomfort that impairs his or her ability to participate in debate. The chair will attempt to remedy the problem. 
+        POINT OF PARLIAMENTARY INQUIRY - 
+        A point of parliamentary inquiry may be raised when a member is unsure of the committee's proceedings or status. Such a point may address questions including, but not limited to parliamentary procedure, the status of the speakers' list, or the status of a resolution and/or amendment. The chair shall answer the point before debate proceeds. 
+        To make a point, respectfully call out beyond your brethren:
+        \"Point of <>. <POINT>.\"
+        For instance:
+        \"Point of Personal Privilege. The delegation's wayward countenance leads to difficult attention towards their attempts at wit.\"
+        \"Point of Order. The moderated caucus penultimate in the order was mistakenly ignored for a procedural vote.\"  
+        \"Point of Parliamentary Inquiry. When is the correct time to divide this paper in twain?\"
+        For a further understanding, gaze your tempestuous sights upon:
+        https://www.munprep.org/blog-home-page/mun-points-and-motions-how-to-use-them-properly'''
+    elif re.compile('(?<!\w)(yield|yields)(?!\w)', re.IGNORECASE).search(str) is not None:
+        return '''During formal debate, all speakers may yield any remaining time in one of three ways. All yields must be announced to the chair before the speaker begins his or her remarks. Yields are only allowed during the speakers list. Let us walk through them at the present moment, as a blade of grass displayed upon the summer wind:
+        YIELD TO THE DAIS/CHAIR -
+        The speaker may yield to the chair, abdicating their time and returning to the prison they name their desk.
+        YIELD TO POINTS OF INFORMATION -
+        The speaker may yield to points of information from other member-states. Questions asked of a delegate will not count against what time remains. Once a speaker has yielded to points of information, any member-state that wishes to make such a motion will signify so by raising the delegation's placard. The chair will recognize a delegation which may then ask one question. 
+        YIELD TO ANOTHER DELEGATION -
+        The speaker may yield time to another member-state by informing the chair which member shall receive the balance of the speaking time before any remarks are made. Neither delegation will be able to yield to points of information. 
+        To yield, simply state with great confidence:
+        \"We now yield the remainder of our time to: <THE CHAIR/POINTS OF INFORMATION/THE DELEGATION OF>\"
+        To feed\’st thy light\’s flame with further self-substantial fuel: https://docs.google.com/document/d/11iKWptlU39CySy4vLO6aDhx9CMaWHsZBTUqgPLmt8aE/edit?usp=sharing'''
+    elif re.compile('(?<!\w)(voting procedure|voting order)(?!\w)', re.IGNORECASE).search(str) is not None:
+        return '''Voting procedure shall occur when a motion to debate passes, or the half-wits in thine committee have foolishly allowed the well of the speakers list to run dry. Here is what shall occur:
+        - All doors will be barred. All communication between delegates must cease under pain of death. 
+        - Hostile amendments will be voted on in the order they were recieved. At GSMSTMUNC, 2/3 must vote for amendment approval in order to save them from the wastes of history.
+        - Motions will be requested. At this vital juncture, thine options are few: divide, motion for roll call, or remain silent. If no motions are called for, a placard vote shall ensue.
+        - Any divisions of the question will be voted upon.
+        - Draft resolutions shall be voted on in the order they were received. Unless thou hath placed thineselves within the bowels of the Security Council, a majority is sufficient to pass.
+        After all resolutions have lived or died, voting procedure shall end. The final motion of committee will be to adjourn it, requiring a 2/3 majority to pass.
+        When the fateful time comes, thou must vote: \"yes,\" \"no,\" \"no with rights,\" \"yes with rights,\" \"pass,\" or \"abstain.\" The latter is available only to those who are only \"Present," and not "Present and Voting.\" 
+        Passing forcest thou to the end of thine queue in a roll-call vote, buying time. When thou votest \"with rights,\" thou must perform a speech upon your decision, upon the chair's universal discretion.
+        Feast thine minds further: https://teimun.org/mun-101-the-rules-of-procedure/'''
+    elif re.compile('(?<!\w)(ultimate bkgd|ult bkgd|ultimate background|ult background)(?!\w)', re.IGNORECASE).search(str) is not None:
+        return 'Thy document, as old as the sands of time: https://docs.google.com/document/d/1_33AteI8TpO2aypneuyNo0VWxopc801GAOI7Tspy5TE/edit?usp=sharing'
+    return ''
+
+def greeting(str):
+    p = re.compile('(?<!\w)(hi+|hello+|hullo+|hey+|howdy|good morning+|good evening+|good afternoon+|gm+)(?!\w)', re.IGNORECASE)
+    if p.search(str) is not None:
+        hellos = ['Asalaam alaikum',
+    'Zdrasti',
+    'Zdraveĭte',
+    'Nǐ hǎo',
+    'Nǐn hǎo',
+    'Hallo',
+    'Goede dag',
+    'Hey',
+    'Hello',
+    'Salut',
+    'Bonjour',
+    'Hug',
+    'Dia dhuit',
+    'Hallo',
+    'Guten tag',
+    'Yasou',
+    'Kalimera',
+    'Shalom',
+    'Shalom aleichem',
+    'Hē',
+    'Namastē',
+    'Halló',
+    'Góðan dag',
+    'Salam!',
+    'Selamat siang',
+    'Ciao',
+    'Salve',
+    'Yā,_Yō',
+    'Konnichiwa',
+    'Suosdei',
+    'Suostei',
+    'Anyoung',
+    'Anyoung haseyo',
+    'Hej',
+    'Cześć',
+    'Cześć!',
+    'Dzień dobry!',
+    'Oi',
+    'Olá',
+    'Hei',
+    'Bună ziua',
+    'Privet',
+    'Zdravstvuyte',
+    '¿Qué tal?',
+    'Hola',
+    'Hujambo',
+    'Habari',
+    'Hej',
+    'God dag',
+    'Ia ora na',
+    'Ia ora na',
+    'Selam',
+    'Merhaba',
+    'Chào',
+    'Xin chào',
+    'Helo',
+    'Shwmae',
+    'Sawubona',
+    'Ngiyakwemukela',
+    'Yo',
+    'Hi',
+    'Well met',
+    'Prithee',
+    'Greetings',
+    'How dost you?',
+    'And to you!',
+    'Aye!']
+        return random.choice(hellos)
+    p = re.compile('(?<!\w)(bye+|ttyl+|see ya+|see you+|goodbye+)(?!\w)', re.IGNORECASE)
+    if p.search(str) is not None:
+        byes = ['Goodbye!', 'And to you!', 'Until next time!', 'Until later!', 'See you soon!', 'Goodbye.', 'It was a pleasure.', 'Pleased to have seen you!']
+        return random.choice(byes)
+    p = re.compile('(?<!\w)(wish me|wish us|wish them|wish her|wish him)(?!\w)', re.IGNORECASE)
+    if p.search(str) is not None:
+        return random.choice(['Good luck', 'Best of luck!', 'I wish you much joy.', 'May your tribulations be successful.', 
+                              'May the odds ever be in your favor.', 'Best wishes!', 'Best, \nRichard'])
+    
+    p = re.compile(re.escape('(?<!\w)(howre you+|how are you+|hows it going+|)(?!\w)'), re.IGNORECASE)
+    if p.search(str) is not None:
+        return random.choice(['Valorous, how art thee?' ,
+                              'As good as the sun shall rise on the morrow',
+                               'Marvelous',
+                               'Perhaps better some days',
+                               'Committing to finishing mine position paper',
+                               'As of now I am writing a resolution',
+                               'I am attempting to recall precedence for motions',
+                               'Tired, but in good health',
+                               'Filled with wayward melancholy and nuclear strategy',
+                               'Tooketh with boundless joy and pride',
+                               'Not restful',
+                               'Filled with anticipation',
+                               'As the bunch of grapes that wast did press into wine'])
+    return ''
 
 def no_idea(str):
     print('activating eliza bot...')
@@ -223,191 +353,61 @@ def news_find(str):
     print('found!')
     return get_news_link(str)
 
-def greeting(str):
-    p = re.compile('(?<!\w)(hi+|hello+|hullo+|hey+|howdy|good morning+|good evening+|good afternoon+|gm+)(?!\w)', re.IGNORECASE)
-    if p.search(str) is not None:
-        hellos = ['Asalaam alaikum',
-    'Zdrasti',
-    'Zdraveĭte',
-    'Nǐ hǎo',
-    'Nǐn hǎo',
-    'Hallo',
-    'Goede dag',
-    'Hey',
-    'Hello',
-    'Salut',
-    'Bonjour',
-    'Hug',
-    'Dia dhuit',
-    'Hallo',
-    'Guten tag',
-    'Yasou',
-    'Kalimera',
-    'Shalom',
-    'Shalom aleichem',
-    'Hē',
-    'Namastē',
-    'Halló',
-    'Góðan dag',
-    'Salam!',
-    'Selamat siang',
-    'Ciao',
-    'Salve',
-    'Yā,_Yō',
-    'Konnichiwa',
-    'Suosdei',
-    'Suostei',
-    'Anyoung',
-    'Anyoung haseyo',
-    'Hej',
-    'Cześć',
-    'Cześć!',
-    'Dzień dobry!',
-    'Oi',
-    'Olá',
-    'Hei',
-    'Bună ziua',
-    'Privet',
-    'Zdravstvuyte',
-    '¿Qué tal?',
-    'Hola',
-    'Hujambo',
-    'Habari',
-    'Hej',
-    'God dag',
-    'Ia ora na',
-    'Ia ora na',
-    'Selam',
-    'Merhaba',
-    'Chào',
-    'Xin chào',
-    'Helo',
-    'Shwmae',
-    'Sawubona',
-    'Ngiyakwemukela',
-    'Yo',
-    'Hi',
-    'Well met',
-    'Prithee',
-    'Greetings',
-    'How dost you?',
-    'And to you!',
-    'Aye!']
-        return random.choice(hellos)
-    p = re.compile('(?<!\w)(bye+|ttyl+|see ya+|see you+|goodbye+)(?!\w)', re.IGNORECASE)
-    if p.search(str) is not None:
-        byes = ['Goodbye!', 'And to you!', 'Until next time!', 'Until later!', 'See you soon!', 'Goodbye.', 'It was a pleasure.', 'Pleased to have seen you!']
-        return random.choice(byes)
-    p = re.compile('(?<!\w)(wish me|wish us|wish them|wish her|wish him)(?!\w)', re.IGNORECASE)
-    if p.search(str) is not None:
-        return random.choice(['Good luck', 'Best of luck!', 'I wish you much joy.', 'May your tribulations be successful.', 
-                              'May the odds ever be in your favor.', 'Best wishes!', 'Best, \nRichard'])
+def get_news_link(s):
+    str = s.lower()
+    print('getting news link, ')
+    if 'climate c' in str:
+        print('topic: climate change')
+        url = 'https://news.un.org/feed/subscribe/en/news/topic/climate-change/feed/rss.xml'
+    elif 'women' in str:
+        print('topic: un women')
+        url = 'https://www.unwomen.org/en/rss-feeds/news'
+    elif 'economic' in str:
+        print('topic: economic and social council')
+        url = 'https://news.un.org/feed/subscribe/en/news/topic/economic-development/feed/rss.xml'
+    elif 'health' in str:
+        print('topic: health')
+        url = 'https://news.un.org/feed/subscribe/en/news/topic/health/feed/rss.xml'
+    elif 'geneva' in str:
+        print('location: un geneva')
+        url = 'https://www.ungeneva.org/news-media/press-releases-list/rss.xml'
+    elif 'human' in str:
+        print('topic: human rights')
+        url = 'https://news.un.org/feed/subscribe/en/news/topic/human-rights/feed/rss.xml'
+    elif 'sdg' in str or 'sustainable de' in str:
+        print('topic: SDGs')
+        url = 'https://news.un.org/feed/subscribe/en/news/topic/sdgs/feed/rss.xml'
+    elif 'middle east' in str:
+        print('region: middle east')
+        url = 'https://news.un.org/feed/subscribe/en/news/region/middle-east/feed/rss.xml'
+    elif 'asia' in str:
+        print('region: asia')
+        url = 'https://news.un.org/feed/subscribe/en/news/region/asia-pacific/feed/rss.xml'
+    elif 'africa' in str:
+        print('region: africa')
+        url = 'https://news.un.org/feed/subscribe/en/news/region/africa/feed/rss.xml'
+    elif 'europe' in str:
+        print('region: europe')
+        url = 'https://news.un.org/feed/subscribe/en/news/region/europe/feed/rss.xml'
+    elif 'america' in str:
+        print('region: americas')
+        url = 'https://news.un.org/feed/subscribe/en/news/region/americas/feed/rss.xml'
+    else:
+        print('no region found, sharing generic story')
+        url = 'https://news.un.org/feed/subscribe/en/news/all/rss.xml'
     
-    p = re.compile(re.escape('(?<!\w)(howre you+|how are you+|hows it going+|)(?!\w)'), re.IGNORECASE)
-    if p.search(str) is not None:
-        return random.choice(['Valorous, how art thee?' ,
-                              'As good as the sun shall rise on the morrow',
-                               'Marvelous',
-                               'Perhaps better some days',
-                               'Committing to finishing mine position paper',
-                               'As of now I am writing a resolution',
-                               'I am attempting to recall precedence for motions',
-                               'Tired, but in good health',
-                               'Filled with wayward melancholy and nuclear strategy',
-                               'Tooketh with boundless joy and pride',
-                               'Not restful',
-                               'Filled with anticipation',
-                               'As the bunch of grapes that wast did press into wine'])
-    return ''
+    xml = urllib3.PoolManager()
+    data = xml.request('GET', url).data
 
-def answer_parlipro(str):
-    if re.compile('(?<!\w)(unmod|unmoderated caucus|unmoderated)(?!\w)', re.IGNORECASE).search(str) is not None:
-        return '''Unmoderated caucuses are when delegates can get up from their seat and walk around, interrupting normal debate. This is often used to gather support, talk to key partners, or write a resolution. To motion for an unmoderated caucus, say \"<DELEGATION> motions for a <DURATION> minute unmoderated caucus.\" Importantly, unmoderated caucuses need no topic.
-        Try this: https://muninfopedia.home.blog/2019/03/07/unmoderated-caucus/ '''
-    elif re.compile('(?<!\w)(mod|moderated caucus|moderated)(?!\w)', re.IGNORECASE).search(str) is not None:
-        return '''A moderated caucus, or a mod, is a period of formal debate, where speakers will give speeches on their perspective about a topic. For example, South Korea might talk about the DMZ during a moderated caucus on "Current Issue," if the currently debated issue is Addressing Destabilization on The Korean Peninsula. To motion for a moderated caucus, try \"<> motions for a <> minute mod with a speaking time of <> on the topic of <>\" Remember that your total time must be divisible by your speaking time!
-        Try this: https://munuc.org/speaking-part-1/'''
-    elif re.compile('(?<!\w)(point|points)(?!\w)', re.IGNORECASE).search(str) is not None:
-        return '''There are three points. All points may interrupt a speaker or even the chair. Let us go through them at once!
-        POINT OF ORDER -
-        A point of order is appropriate when a member finds a procedural error made by the chair or by another delegate. A member-state making such a motion may not speak on the substantive issue at hand, but must limit remarks to the precise procedural point in question. 
-        POINT OF PERSONAL PRIVILEGE - 
-        A point of personal privilege is appropriate when a member is experiencing a personal discomfort that impairs his or her ability to participate in debate. The chair will attempt to remedy the problem. 
-        POINT OF PARLIAMENTARY INQUIRY - 
-        A point of parliamentary inquiry may be raised when a member is unsure of the committee's proceedings or status. Such a point may address questions including, but not limited to parliamentary procedure, the status of the speakers' list, or the status of a resolution and/or amendment. The chair shall answer the point before debate proceeds. 
-        To make a point, respectfully call out beyond your brethren:
-        \"Point of <>. <POINT>.\"
-        For instance:
-        \"Point of Personal Privilege. The delegation's wayward countenance leads to difficult attention towards their attempts at wit.\"
-        \"Point of Order. The moderated caucus penultimate in the order was mistakenly ignored for a procedural vote.\"  
-        \"Point of Parliamentary Inquiry. When is the correct time to divide this paper in twain?\"
-        For a further understanding, gaze your tempestuous sights upon:
-        https://www.munprep.org/blog-home-page/mun-points-and-motions-how-to-use-them-properly'''
-    elif re.compile('(?<!\w)(yield|yields)(?!\w)', re.IGNORECASE).search(str) is not None:
-        return '''During formal debate, all speakers may yield any remaining time in one of three ways. All yields must be announced to the chair before the speaker begins his or her remarks. Yields are only allowed during the speakers list. Let us walk through them at the present moment, as a blade of grass displayed upon the summer wind:
-        YIELD TO THE DAIS/CHAIR -
-        The speaker may yield to the chair, abdicating their time and returning to the prison they name their desk.
-        YIELD TO POINTS OF INFORMATION -
-        The speaker may yield to points of information from other member-states. Questions asked of a delegate will not count against what time remains. Once a speaker has yielded to points of information, any member-state that wishes to make such a motion will signify so by raising the delegation's placard. The chair will recognize a delegation which may then ask one question. 
-        YIELD TO ANOTHER DELEGATION -
-        The speaker may yield time to another member-state by informing the chair which member shall receive the balance of the speaking time before any remarks are made. Neither delegation will be able to yield to points of information. 
-        To yield, simply state with great confidence:
-        \"We now yield the remainder of our time to: <THE CHAIR/POINTS OF INFORMATION/THE DELEGATION OF>\"
-        To feed\’st thy light\’s flame with further self-substantial fuel: https://docs.google.com/document/d/11iKWptlU39CySy4vLO6aDhx9CMaWHsZBTUqgPLmt8aE/edit?usp=sharing'''
-    elif re.compile('(?<!\w)(voting procedure|voting order)(?!\w)', re.IGNORECASE).search(str) is not None:
-        return '''Voting procedure shall occur when a motion to debate passes, or the half-wits in thine committee have foolishly allowed the well of the speakers list to run dry. Here is what shall occur:
-        - All doors will be barred. All communication between delegates must cease under pain of death. 
-        - Hostile amendments will be voted on in the order they were recieved. At GSMSTMUNC, 2/3 must vote for amendment approval in order to save them from the wastes of history.
-        - Motions will be requested. At this vital juncture, thine options are few: divide, motion for roll call, or remain silent. If no motions are called for, a placard vote shall ensue.
-        - Any divisions of the question will be voted upon.
-        - Draft resolutions shall be voted on in the order they were received. Unless thou hath placed thineselves within the bowels of the Security Council, a majority is sufficient to pass.
-        After all resolutions have lived or died, voting procedure shall end. The final motion of committee will be to adjourn it, requiring a 2/3 majority to pass.
-        When the fateful time comes, thou must vote: \"yes,\" \"no,\" \"no with rights,\" \"yes with rights,\" \"pass,\" or \"abstain.\" The latter is available only to those who are only \"Present," and not "Present and Voting.\" 
-        Passing forcest thou to the end of thine queue in a roll-call vote, buying time. When thou votest \"with rights,\" thou must perform a speech upon your decision, upon the chair's universal discretion.
-        Feast thine minds further: https://teimun.org/mun-101-the-rules-of-procedure/'''
-    elif re.compile('(?<!\w)(ultimate bkgd|ult bkgd|ultimate background|ult background)(?!\w)', re.IGNORECASE).search(str) is not None:
-        return 'Thy document, as old as the sands of time: https://docs.google.com/document/d/1_33AteI8TpO2aypneuyNo0VWxopc801GAOI7Tspy5TE/edit?usp=sharing'
-    return ''
-
-def respond_direct(prompt):
-    print('message to richard detected!')
-    answer = conf_info(prompt)
-    if answer == '':
-        answer = news_find(prompt)
-    if answer == '':
-        answer = answer_parlipro(prompt)
-    if answer == '' and has_thanking(prompt):
-        answer = random.choice(['You are most welcome!', 'It was my pleasure!', 'Mhm', 'Of course!', 
-                                'And thank you!', 'Ty!', 'yw', 'You are the welcomest!',
-                                'It was nothing more than my duty!', 'Anytime!', 'You helped!'])
-    if answer == '':
-        answer = greeting(prompt)
-    if answer == '' and 'do better' in prompt:
-        answer = random.choice(['I try mine best', ':(', '💔', 'D:', 'Ah.', 'Silence, unbeliever!'])
-    if answer == '':
-        answer = no_idea(prompt)
-    return answer
-
-def has_thanking(str):
-    p = re.compile('(?<!\w)(ty+|tysm+|thx+|thanks|thank u+|thank you+|gracias+|dank+|danke|dankesch|dank u+)(?!\w)',re.IGNORECASE)
-    return p.search(str) is not None
-
-def mentions_ai(str):
-    p = re.compile('(?<!\w)(ai|machine learning|ml|artificial intelligence)(?!\w)', re.IGNORECASE)
-    return p.search(str) is not None
-
-def has_panic(str):
-    if 'lmao' in str.lower():
-        return False
-    if str.upper() == str and len(str) > 4:
-        return True
-    if 'AAAAAA' in str:
-        return True
-    return False
-
-def has_celebration(str):
-    p = re.compile('(?<!\w)(yay+|wooo+|congrats+|congratulations+|bravo+|hooray+)(?!\w)', re.IGNORECASE)
-    return p.search(str) is not None
+    soup = BeautifulSoup(data, 'xml')
+    links = soup.find_all('link')
+    all_news = []
+    for link in links:
+        all_news.append(link.get_text())
+    print(all_news)
+    all_news = [link for link in all_news if ('story' in link or 'doc' in link)]
+    print(all_news)
+    return(random.choice(all_news))
 
 @client.event
 async def on_message(message):
@@ -480,4 +480,3 @@ async def on_message(message):
     print('end message response sequence~')
 
 client.run(token)
-
