@@ -1,4 +1,6 @@
 # bot.py
+import os 
+
 import random
 import discord
 from discord.ext import tasks
@@ -8,7 +10,7 @@ import time
 from bs4 import BeautifulSoup
 import urllib3
 
-token = 'MTExNzYyNTE3MTgyMjUxODI5Mw.GIqnfM.IKPXZEasORYFYBJxINcpIiT11Cmd1CL35bCwCE'
+token = os.environ['richard_token']
 server = ''
 
 intents = discord.Intents.all()
@@ -299,7 +301,7 @@ def greeting(str):
     p = re.compile('(?<!\w)(wish me|wish us|wish them|wish her|wish him)(?!\w)', re.IGNORECASE)
     if p.search(str) is not None:
         return random.choice(['Good luck', 'Best of luck!', 'I wish you much joy.', 'May your tribulations be successful.', 
-                              'May the odds ever be in your favor.'m 'Best wishes!', 'Best, \nRichard'])
+                              'May the odds ever be in your favor.', 'Best wishes!', 'Best, \nRichard'])
     
     p = re.compile(re.escape('(?<!\w)(howre you+|how are you+|hows it going+|)(?!\w)'), re.IGNORECASE)
     if p.search(str) is not None:
@@ -308,7 +310,7 @@ def greeting(str):
                                'Marvelous',
                                'Perhaps better some days',
                                'Committing to finishing mine position paper',
-                               'As of now I am writing a resolution;,
+                               'As of now I am writing a resolution',
                                'I am attempting to recall precedence for motions',
                                'Tired, but in good health',
                                'Filled with wayward melancholy and nuclear strategy',
