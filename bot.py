@@ -1,6 +1,6 @@
 # bot.py
 import os 
-
+import research
 import random
 import discord
 from discord.ext import tasks
@@ -68,6 +68,8 @@ def respond_direct(prompt):
         answer = news_find(prompt)
     if answer == '':
         answer = answer_parlipro(prompt)
+    if answer == '':
+        answer = research.research(prompt)
     if answer == '' and has_thanking(prompt):
         answer = random.choice(['You are most welcome!', 'It was my pleasure!', 'Mhm', 'Of course!', 
                                 'And thank you!', 'Ty!', 'yw', 'You are the welcomest!',
@@ -293,6 +295,15 @@ def conf_info(prompt):
         'rules': 'https://conference.kennesaw.edu/hsmun/delegate-preparation.php',
         'delegation_awards': False        
     }
+    UGAMUNC = {
+        'name': 'UGAMUNC',
+        'website': 'https://www.ugamunc.com/',
+        'date': 'an unknown time',
+        'committees': ['The fools at UGAMUNC have refused to reveal their committees!'],
+        'awards': ['With fortune I endeavor to inform thou that I know not of the awards provided.'],
+        'rules': 'https://www.ugamunc.com/rules-and-procedures/',
+        'delegation_awards': True           
+    }
     answer = ''
     if 'gsmstmun' in prompt.lower():
         conference = GSMSTMUNC
@@ -302,6 +313,8 @@ def conf_info(prompt):
         conference = GSUMUNC
     elif 'ksumun' in prompt.lower():
         conference = KSUMUNC
+    elif 'ugamun' in prompt.lower():
+        conference = UGAMUNC
     else:
         print('not found!')
         return answer
