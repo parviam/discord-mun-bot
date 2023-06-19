@@ -21,11 +21,11 @@ last_message_time = time.time()
 @tasks.loop(hours = 1.0)
 async def add_news():
         global last_message_time
-        rel_channel = client.get_channel(1116911241697443840)
+        rel_channel = client.get_channel(963993489429917739)
         t = time.time()
         if t - last_message_time > random.randint(86400, 10000+86400):
             last_message_time = t
-            await rel_channel.send(get_news_link('all'))
+            #await rel_channel.send(get_news_link('all'))
 
 @client.event
 async def on_ready():
@@ -46,7 +46,7 @@ def mentions_ai(str):
 def has_panic(str):
     if 'lmao' in str.lower():
         return False
-    if str.upper() == str and len(str) > 4:
+    if str.upper() == str and len(str) > 4: #change to regex
         return True
     if 'AAAAAA' in str:
         return True
@@ -210,7 +210,6 @@ def greeting(str):
     if p.search(str) is not None:
         return random.choice(['Good luck', 'Best of luck!', 'I wish you much joy.', 'May your tribulations be successful.', 
                               'May the odds ever be in your favor.', 'Best wishes!', 'Best, \nRichard'])
-    
     p = re.compile(re.escape('(?<!\w)(howre you+|how are you+|hows it going+|)(?!\w)'), re.IGNORECASE)
     if p.search(str) is not None:
         return random.choice(['Valorous, how art thee?' ,
