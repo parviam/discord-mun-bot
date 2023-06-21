@@ -1,16 +1,15 @@
 # bot.py
-import os 
 import research
 import random
 import discord
 from discord.ext import tasks
 import re
-
+import ddg
 import time
 from bs4 import BeautifulSoup
 import urllib3
 
-token = os.environ['richard_token']
+token = open('TOKEN.txt', 'r').read()
 server = ''
 
 intents = discord.Intents.all()
@@ -70,6 +69,8 @@ def respond_direct(prompt):
         answer = answer_parlipro(prompt)
     if answer == '':
         answer = research.research(prompt)
+    if answer == '':
+        answer = ddg.ddg_search(prompt)
     if answer == '' and has_thanking(prompt):
         answer = random.choice(['You are most welcome!', 'It was my pleasure!', 'Mhm', 'Of course!', 
                                 'And thank you!', 'Ty!', 'yw', 'You are the welcomest!',
