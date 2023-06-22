@@ -1,19 +1,25 @@
 import urllib3
 from bs4 import BeautifulSoup
+import re
+import ddg
 
 def research(str):
-    print('looking for research request...')
+    print('looking for research request...', end = ' ')
     answer = give_committee_info(str)
-    if 'research' not in str.lower() and 'info' not in str.lower():
+    if 'research' not in str.lower():
         print('not found!')
         return answer
-    print('found!')
+    print('found!', end = ' ')
+    str = ddg.clean_question(str)
     country = find_country(str)
     if country is not None:
-        answer += '\n\nThou forebearers hath created a great research document, to best all other guides: '
-        answer += '\nhttps://docs.google.com/document/d/1_33AteI8TpO2aypneuyNo0VWxopc801GAOI7Tspy5TE/edit?usp=sharing'
-        answer += '\n\nThoust shalt continue thou research on ' + country + ' here: '
-        answer += '\n' + foreign_wiki(country) + '\n' + country_wiki(country)
+        answer = 'Thou shalst use the following links to guide thou:\n\n' + answer
+        country = sanitize_nation(country)
+        print('\ncountry:', country)
+        answer += 'https://docs.google.com/document/d/1_33AteI8TpO2aypneuyNo0VWxopc801GAOI7Tspy5TE/edit?usp=sharing\n'
+        answer += foreign_wiki(country) + '\n' + country_wiki(country)
+    else:
+        print('no country found!')
     return answer
 
 def give_committee_info(str):
@@ -26,7 +32,7 @@ def give_committee_info(str):
         ans += '\nhttps://www.un.org/en/ga/second/'
     if 'ga3' in str.lower():
         ans += 'GA3 (SOCHUM) considers social and humanitarian affairs: '
-        ans += 'https://www.un.org/en/ga/third/index.shtml'
+        ans += '\nhttps://www.un.org/en/ga/third/index.shtml'
     if 'ga4' in str.lower():
         ans += 'GA4 deals with special decolonization, polticial issues, and outer space, and some other issues: '
         ans += '\nhttps://www.un.org/en/ga/fourth/index.shtml'
@@ -35,7 +41,7 @@ def give_committee_info(str):
         ans += '\nhttps://www.un.org/en/ga/fifth/index.shtml'
     if 'ga6' in str.lower():
         ans += 'GA6 deals with legal questions: '
-        ans += 'https://www.un.org/en/ga/sixth/index.shtml'
+        ans += '\nhttps://www.un.org/en/ga/sixth/index.shtml'
     if 'security council' in str.lower() or 'unsc' in str.lower():
         ans += 'The Security Council has primary responsibility for global peace and security. They may place sanctions and deploy peacekeepers: '
         ans += '\nhttps://www.un.org/securitycouncil/'
@@ -95,6 +101,10 @@ def find_country(str):
                 'Democratic People\'s Republic of Korea',
                 'Democratic Republic of the Congo',
                 'Denmark',
+                'DPRK',
+                'Korea',
+                'North Korea',
+                'South Korea',
                 'Djibouti',
                 'Dominica',
                 'Dominican Republic',
@@ -242,19 +252,47 @@ def find_country(str):
                 'Zimbabwe']
     for country in countries:
         if country.lower() in str.lower():
-            print(country + ' found!')
             return country
 
 def foreign_wiki(nation):
-    url = 'https://en.wikipedia.org/w/api.php?action=opensearch&format=xml&search=foreign+relations+' + nation.lower() #need to sanitize nation
+    url = 'https://en.wikipedia.org/w/api.php?action=opensearch&profile=fuzzy&format=xml&search=foreign+relations+' + nation.lower() 
     xml = urllib3.PoolManager()
-    data = xml.request('GET', url).data
+    try:
+        data = xml.request('GET', url).data
+        soup = BeautifulSoup(data, 'xml')
+        return soup.find('Url').get_text()
+    except:
+        return ''
+
+
+def country_wiki(nation):
+    url = 'https://en.wikipedia.org/w/api.php?action=opensearch&format=xml&search=' + nation.lower() 
+    xml = urllib3.PoolManager()
+    try:
+        data = xml.request('GET', url).data
+        soup = BeautifulSoup(data, 'xml')
+        return soup.find('Url').get_text()
+    except:
+        return ''
+
+def un_news_stories(nation): #das macht nicht
+    url = 'https://www.unmultimedia.org/avlibrary/search/search.jsp?mediatype=&sort=cdate_desc&q=' + nation.lower()
+    http = urllib3.PoolManager()
+    print(url)
+    try:
+        data = http.request('GET', url).data
+        soup = BeautifulSoup(data)
+        for link in soup.find_all('a'):
+            print(link.get('href'))
+            #if '/en/story' in link.get('href'):
+             #   print(link.get('href'))
+    except:
+        return ''
     soup = BeautifulSoup(data, 'xml')
     return soup.find('Url').get_text()
 
-def country_wiki(nation):
-    url = 'https://en.wikipedia.org/w/api.php?action=opensearch&format=xml&search=' + nation.lower() #need to sanitize nation
-    xml = urllib3.PoolManager()
-    data = xml.request('GET', url).data
-    soup = BeautifulSoup(data, 'xml')
-    return soup.find('Url').get_text()
+def sanitize_nation(nation):
+    return ('+'.join(nation.split())).lower()
+
+
+#print(un_news_stories('france'))
