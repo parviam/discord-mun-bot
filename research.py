@@ -2,6 +2,9 @@ import urllib3
 from bs4 import BeautifulSoup
 import re
 import ddg
+import topics
+import countries
+import foreign_ministries
 
 def research(str):
     print('looking for research request...', end = ' ')
@@ -10,10 +13,10 @@ def research(str):
         print('not found!')
         return answer
     print('found!', end = ' ')
-    str = ddg.clean_question(str)
+    str = ddg.sanitize_phrases(str)
     country = find_country(str)
     if country is not None:
-        answer = 'Thou shalst use the following links to guide thou:\n\n' + answer
+        answer = 'Thou shalst use the following links to guide thou:\n\n' + answer + '\n'
         country = sanitize_nation(country)
         print('\ncountry:', country)
         answer += 'https://docs.google.com/document/d/1_33AteI8TpO2aypneuyNo0VWxopc801GAOI7Tspy5TE/edit?usp=sharing\n'
@@ -260,10 +263,9 @@ def foreign_wiki(nation):
     try:
         data = xml.request('GET', url).data
         soup = BeautifulSoup(data, 'xml')
-        return soup.find('Url').get_text()
+        return soup.find('Url').get_text() + '\n'
     except:
         return ''
-
 
 def country_wiki(nation):
     url = 'https://en.wikipedia.org/w/api.php?action=opensearch&format=xml&search=' + nation.lower() 
@@ -271,7 +273,7 @@ def country_wiki(nation):
     try:
         data = xml.request('GET', url).data
         soup = BeautifulSoup(data, 'xml')
-        return soup.find('Url').get_text()
+        return soup.find('Url').get_text() + '\n'
     except:
         return ''
 
@@ -294,5 +296,62 @@ def un_news_stories(nation): #das macht nicht
 def sanitize_nation(nation):
     return ('+'.join(nation.split())).lower()
 
+def research_better(question):
+    answer = 'Let us embark on some research together:\n\n'
+    question = componetize(question)
+    for country in question['countries']:
+        answer += get_country_links(country)
+    if question['countries'] is not []:
+        answer += 'ultimate background guide: \n'
+        answer += 'https://docs.google.com/document/d/1_33AteI8TpO2aypneuyNo0VWxopc801GAOI7Tspy5TE/edit?usp=sharing\n'
+    answer += get_topic_links(question['topics'])
+    return answer
 
-#print(un_news_stories('france'))
+def get_country_links(nation):
+    answer = 'about ' + nation.lower() + ':\n'
+    answer += foreign_wiki(nation)
+    answer += country_wiki(nation)
+    answer += foreign_ministry(nation)
+    return answer + '\n'
+
+def foreign_ministry(nation):
+    ministries = foreign_ministries.ministries
+    for country in ministries:
+        p = re.compile('(?<!\w)'+country[1].lower()+'(?!\w)', re.IGNORECASE)
+        if re.search(p, nation) is not None:
+            return country[0] + '\n'
+    
+def get_topic_links(topic_list):
+    return ''
+
+def componetize(question):
+    components = {
+        'countries': [],
+        'topics': [],
+        'committees': []
+    }
+    question = ddg.sanitize_phrases(question)
+    components['countries'] = find_all_countries(question)
+    components['topics'] = find_all_topics(question)
+    return components
+
+def find_all_countries(str):
+    found_countries = []
+    all_countries = countries.countries
+    for country in all_countries:
+        p = re.compile('(?<!\w)'+country.lower()+'(?!\w)', re.IGNORECASE)
+        if re.search(p, str) is not None:
+            found_countries.append(country)
+    return found_countries
+
+def find_all_topics(str):
+    all_topics = topics.topics
+    found_topics =[]
+    for topic in all_topics:
+        p = re.compile('(?<!\w)'+topic+'(?!\w)', re.IGNORECASE)
+        if re.search(p, str) is not None:
+            print('i\'m guessing you\'re asking about: ' + topic.lower())
+            found_topics.append(topic)
+    return sorted(found_topics, reverse=True, key=len)
+
+print(research_better('richard, i\'m representing croatia in mun. help me research their nuclear weapons policy.'))
