@@ -20,11 +20,11 @@ last_message_time = time.time()
 @tasks.loop(hours = 1.0)
 async def add_news():
         global last_message_time
-        rel_channel = client.get_channel(963993489429917739)
+        rel_channel = client.get_channel(1160372013030981633)
         t = time.time()
-        if t - last_message_time > random.randint(86400, 10000+86400):
+        if t - last_message_time > 86400:
             last_message_time = t
-            #await rel_channel.send(get_news_link('all'))
+            await rel_channel.send(get_news_link('all'))
 
 @client.event
 async def on_ready():
@@ -488,6 +488,8 @@ async def on_message(message):
                                   ])
 
     if not (response == ''):
+        if len(response) > 2000:
+            response = response[0:1900] + '... (I was cut off by Discord\'s cruel chains)'
         print('response generated: ' + response)
         await message.channel.send(response)
     print('end message response sequence~')
